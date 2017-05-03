@@ -30,17 +30,22 @@ def main():
     if args.get("video", None) is None:
         camera = cv2.VideoCapture(0)  # @UndefinedVariable
         time.sleep(1)
-     
+        #my cam was starting with blanks
+        camera.read()
+        camera.read()
+        ret,frame = camera.read()
+        if ret==False:
+            print "ERROR:Failed to read from camera. Make sure camera is connected and working. Check it from other software... Exiting."
+            camera.release()
+            exit(1)
     # otherwise, we are reading from a video file
     else:
         camera = cv2.VideoCapture(args["video"])  # @UndefinedVariable
      
     # initialize the first frame in the video stream
     firstFrame = None
-    #my cam was starting with blanks
-    camera.read()
-    camera.read()
-    camera.read()
+        
+        
     i = 0
     
     # loop over the frames of the video
