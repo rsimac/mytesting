@@ -85,7 +85,7 @@ def main():
         for c in cnts:
             # if the contour is too small, ignore it
             cntrarea = cv2.contourArea(c) # @UndefinedVariable
-            print cntrarea
+            #print cntrarea
             if cntrarea < args["min_area"]:
                 continue
      
