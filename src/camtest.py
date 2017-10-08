@@ -48,6 +48,33 @@ def main():
         
     i = 0
     
+    occupied = False
+    
+    writer = None
+    fourcc = int(camera.get(cv2.CAP_PROP_FOURCC))
+    #fourcc = -1
+    frame_size = (int(camera.get(cv2.CAP_PROP_FRAME_WIDTH)), int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    
+    videoformats = ['H264', 'XVID', 'h263', 'DIVX', 'M4S2', 'MP4V', 'WMVP', 'WMV3', 'WMV1', 'mpeg', 'MPEG']
+    
+    fps = camera.get(cv2.CAP_PROP_FPS)
+    fps = 30
+    
+    iscolor = True #BW
+
+    
+    for videoformat in videoformats:
+        fourcc = cv2.VideoWriter_fourcc(*videoformat)
+        print "Trying: "+videoformat
+        filename = "c:/users/user/videos/motion/"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+"."+videoformat        
+        writer = cv2.VideoWriter(filename, fourcc, fps,  frame_size, isColor=iscolor)
+        if writer.isOpened():
+            break
+        else:
+            print "Failed opening video writer"
+                
+    
+    
     # loop over the frames of the video
     while True:
         # grab the current frame and initialize the occupied/unoccupied
@@ -82,10 +109,11 @@ def main():
         (_img, cnts,_hier) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # @UndefinedVariable
      
         # loop over the contours
+        occupied = False
         for c in cnts:
             # if the contour is too small, ignore it
             cntrarea = cv2.contourArea(c) # @UndefinedVariable
-            print cntrarea
+            #print cntrarea
             if cntrarea < args["min_area"]:
                 continue
      
@@ -94,6 +122,7 @@ def main():
             (x, y, w, h) = cv2.boundingRect(c) # @UndefinedVariable
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2) # @UndefinedVariable
             text = "Occupied"
+            occupied = True
 
         # draw the text and timestamp on the frame
         cv2.putText(frame, "Room Status: {}".format(text), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2) # @UndefinedVariable
@@ -101,13 +130,36 @@ def main():
      
         # show the frame and record if the user presses a key
         cv2.imshow("Security Feed", frame) # @UndefinedVariable
-        cv2.imshow("Thresh", thresh) # @UndefinedVariable
-        cv2.imshow("Frame Delta", frameDelta) # @UndefinedVariable
+        #cv2.imshow("Thresh", thresh) # @UndefinedVariable
+        #cv2.imshow("Frame Delta", frameDelta) # @UndefinedVariable
+        
+        if occupied:
+            if not writer:
+                filename = "c:/users/user/videos/motion/"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+"."+videoformat
+                writer = cv2.VideoWriter(filename, fourcc, fps,  frame_size, isColor=iscolor)
+                if not writer.isOpened():
+                    print "Failed opening video writer"
+                    break;
+                
+                print "Opened file: "+filename
+                
+            
+            writer.write(frame)
+            
+        elif writer:
+            #close video if room is back to unocuppied
+            writer.release()
+            writer = None
+            print "Closed file: "+filename
+            
+            
+        #wait 1ms 
         key = cv2.waitKey(1) & 0xFF # @UndefinedVariable
-     
-        # if the `q` key is pressed, break from the lop
+        
+        # if the `q` key is pressed, break from the loop
         if key == ord("q"):
             break
+        
      
     # cleanup the camera and close any open windows
     camera.release()
