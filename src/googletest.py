@@ -1,13 +1,19 @@
 from __future__ import print_function
+
 import httplib2
 import os
 
+
 from apiclient import discovery
+from apiclient.http import MediaFileUpload
+
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
 from oauth2client.service_account import ServiceAccountCredentials
+
+
 
 try:
     import argparse
@@ -68,7 +74,9 @@ def main():
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v3', http=http)
-
+    
+    upload_file(service, "c:/users/user/videos/motion/20171008_210735.H264")
+    
     results = service.files().list(
         pageSize=10,fields="nextPageToken, files(id, name)").execute()
     items = results.get('files', [])
@@ -80,11 +88,28 @@ def main():
             print('{0} ({1})'.format(item['name'], item['id']))
             
             #service account (this) sharing the file with other (me)
-            perm = service.permissions().create(fileId=item['id'], body={"type":"user", "role":"reader", "emailAddress":"robert.simac@gmail.com"})
-            perm.execute()
+            #perm = service.permissions().create(fileId=item['id'], body={"type":"user", "role":"writer", "emailAddress":"robert.simac@gmail.com"})
+            #perm.execute()
             
     #upload: https://developers.google.com/drive/v3/web/manage-uploads
     #create folder https://developers.google.com/drive/v3/web/folder
+
+    
+def upload_file(service, filename):
+    file_metadata = {'name': filename.split('/')[-1]}
+    
+    media = MediaFileUpload(filename, mimetype='video/mp4')
+    
+    file_id = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    
+    perm = service.permissions().create(fileId=file_id['id'], body={"type":"user", "role":"writer", "emailAddress":"robert.simac@gmail.com"})
+    perm.execute()
+
+    return file_id
+    
+    
+    
+    
 
 if __name__ == '__main__':
     main()
