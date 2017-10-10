@@ -48,6 +48,8 @@ def main():
     # initialize the first frame in the video stream
     firstFrame = None
         
+    file_opentime = 0
+    file_max_seconds = 10 #max video duration
         
     i = 0
     
@@ -133,8 +135,8 @@ def main():
             occupied = True
 
         # draw the text and timestamp on the frame
-        cv2.putText(frame, "Room Status: {}".format(text), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2) # @UndefinedVariable
-        cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1) # @UndefinedVariable
+        cv2.putText(frame, "Room Status: {}".format(text), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2) # @UndefinedVariable
+        cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 0), 1) # @UndefinedVariable
      
         # show the frame and record if the user presses a key
         cv2.imshow("Security Feed", frame) # @UndefinedVariable
@@ -150,11 +152,16 @@ def main():
                     break;
                 
                 print "Opened file: "+filename
+                file_opentime = time.time()
                 
             
             writer.write(frame)
             
-        elif writer:
+            
+            if time.time() > (file_opentime+file_max_seconds):
+                occupied = False #force file upload below
+            
+        if writer and not occupied:
             #close video if room is back to unocuppied
             writer.release()
             writer = None

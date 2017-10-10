@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import httplib2
 import os
+import time
 
 
 from apiclient import discovery
@@ -110,16 +111,42 @@ def main():
 
     
 def upload_file(service, filename):
+    max_retries = 5;
+    
     file_metadata = {'name': filename.split('/')[-1]}
     
-    media = MediaFileUpload(filename, mimetype='video/h264')
+    media = MediaFileUpload(filename, mimetype='video/h264') #ASSumed
     
-    file_id = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    file_id = None
     
-    perm = service.permissions().create(fileId=file_id['id'], body={"type":"user", "role":"writer", "emailAddress":"robert.simac@gmail.com"})
-    perm.execute()
+    try:
+        file_id = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        
+    except Exception as e:
+        print("Failed uploading the file, continuing. Exception: {}".format(e))
+        
+    if file_id:
+        
+        for i in range(max_retries):
+            try:
+                perm = service.permissions().create(fileId=file_id['id'], body={"type":"user", "role":"reader", "emailAddress":"robert.simac@gmail.com"}) #ASSumed
+                perm.execute()
+                break
+            except Exception as e:
+                print ("Failed changing permission, retrying {}/{}. Exception: {}".format(i,max_retries,e))
+                time.sleep(1)
+                
     
-    #perm = service.permissions().create(fileId=file_id['id'], body={"type":"user", "role":"owner", "emailAddress":"robert.simac@gmail.com"}, transferOwnership=True)
+        for i in range(max_retries):
+            try:
+                perm = service.permissions().create(fileId=file_id['id'], body={"type":"user", "role":"owner", "emailAddress":"robert.simac@gmail.com"}, transferOwnership=True)
+                perm.execute()
+                break
+            except Exception as e:
+                print ("Failed changing ownership, retrying {}/{}. Exception: {}".format(i,max_retries,e))
+                time.sleep(1)
+
+            
 
     return file_id
     
