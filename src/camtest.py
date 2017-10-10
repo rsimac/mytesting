@@ -14,6 +14,9 @@ import datetime
 import time
 
 import cv2
+
+import googletest
+
  
 # initialize the first frame in the video stream
 firstFrame = None
@@ -62,7 +65,7 @@ def main():
     
     iscolor = True #BW
 
-    
+    '''testing only
     for videoformat in videoformats:
         fourcc = cv2.VideoWriter_fourcc(*videoformat)
         print "Trying: "+videoformat
@@ -72,9 +75,14 @@ def main():
             break
         else:
             print "Failed opening video writer"
+    '''
+    videoformat = 'H264' #tested ok with dll found in src folder
+    fourcc = cv2.VideoWriter_fourcc(*videoformat)
+    
+    #google drive api service
+    service = googletest.get_service()
+
                 
-    
-    
     # loop over the frames of the video
     while True:
         # grab the current frame and initialize the occupied/unoccupied
@@ -152,9 +160,14 @@ def main():
             writer = None
             print "Closed file: "+filename
             
+            #upload the file to 
+            print "Uploading the file"
+            googletest.upload_file(service, filename)
+            print "File uploaded"
             
-        #wait 1ms 
-        key = cv2.waitKey(1) & 0xFF # @UndefinedVariable
+            
+        #wait 30ms to get average 30fps
+        key = cv2.waitKey(30) & 0xFF # @UndefinedVariable
         
         # if the `q` key is pressed, break from the loop
         if key == ord("q"):

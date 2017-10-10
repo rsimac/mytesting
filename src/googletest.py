@@ -11,7 +11,7 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-from oauth2client.service_account import ServiceAccountCredentials
+import oauth2client.service_account
 
 
 
@@ -27,10 +27,24 @@ SCOPES = ['https://www.googleapis.com/auth/drive'] #.metadata.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
+def get_credentials(credential_path="./creds/credentials.json"):
+    
+    credentials = oauth2client.service_account.ServiceAccountCredentials.from_json_keyfile_name(credential_path, SCOPES)
+    
+    return credentials
+
+def get_service(credential_path="./creds/credentials.json"):
+    credentials = get_credentials()
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('drive', 'v3', http=http)
+    
+    return service
+
+    
 # drive apis here: https://developers.google.com/resources/api-libraries/documentation/drive/v3/python/latest/drive_v3.files.html
 
 
-def get_credentials():
+def get_credentials_old():
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
@@ -98,12 +112,14 @@ def main():
 def upload_file(service, filename):
     file_metadata = {'name': filename.split('/')[-1]}
     
-    media = MediaFileUpload(filename, mimetype='video/mp4')
+    media = MediaFileUpload(filename, mimetype='video/h264')
     
     file_id = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     
     perm = service.permissions().create(fileId=file_id['id'], body={"type":"user", "role":"writer", "emailAddress":"robert.simac@gmail.com"})
     perm.execute()
+    
+    #perm = service.permissions().create(fileId=file_id['id'], body={"type":"user", "role":"owner", "emailAddress":"robert.simac@gmail.com"}, transferOwnership=True)
 
     return file_id
     
