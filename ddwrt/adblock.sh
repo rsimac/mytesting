@@ -15,15 +15,15 @@ URI=http://www.mvps.org/winhelp2002/hosts.txt
 
 #local whitelist, use can add hostname exceptions into it
 #for example
+#localhost
 #geo.nbcsports.com
 WHITELIST=/tmp/whitelist.txt
 
 logger Downloading $URI
 wget -O - $URI | grep 0.0.0.0 |
         sed 's/[[:space:]]*#.*$//g;' |
-        grep -v localhost | tr ' ' '\t' |
+        grep -v -w -f $WHITELIST | tr ' ' '\t' |
         tr -s '\t' | tr -d '\015' | 
-        grep --invert-match --word-regexp --file=$WHITELIST |
         sort -u > $HOSTS
 
 CONFFILE=/tmp/dnsmasq.conf
