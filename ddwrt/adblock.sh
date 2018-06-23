@@ -1,34 +1,17 @@
 #!/bin/sh
-#simple adblocking config script for ddwrt
-#based on https://wiki.dd-wrt.com/wiki/index.php/Ad_blocking
-#with whitelisting added
-
 logger WAN up script executing
-HOSTS=/tmp/hosts0
-if test -s $HOSTS
+if test -s /tmp/hosts0
 then
-        rm $HOSTS
+        rm /tmp/hosts0
 fi
 
-#blacklist uri
-URI=http://www.mvps.org/winhelp2002/hosts.txt
-
-#local whitelist, use can add hostname exceptions into it
-#for example
-#localhost
-#geo.nbcsports.com
-WHITELIST=/tmp/whitelist.txt
-
-logger Downloading $URI
-wget -O - $URI | grep 0.0.0.0 |
-        sed 's/[[:space:]]*#.*$//g;' |
-        grep -v -w -f $WHITELIST | tr ' ' '\t' |
-        tr -s '\t' | tr -d '\015' | 
-        sort -u > $HOSTS
-
-CONFFILE=/tmp/dnsmasq.conf
-grep addn-hosts $CONFFILE || echo "addn-hosts=$HOSTS" >> $CONFFILE
-
+logger Downloading http://www.mvps.org/winhelp2002/hosts.txt
+wget -O - http://www.mvps.org/winhelp2002/hosts.txt | grep 0.0.0.0 |
+	sed 's/[[:space:]]*#.*$//g;' |
+	grep -v localhost | tr ' ' '\t' |
+	tr -s '\t' | tr -d '\015' | sort -u >/tmp/hosts0
+grep addn-hosts /tmp/dnsmasq.conf ||
+	echo "addn-hosts=/tmp/hosts0" >>/tmp/dnsmasq.conf
 logger Restarting dnsmasq
 killall dnsmasq
-dnsmasq --conf-file=$CONFFILE
+dnsmasq --conf-file=/tmp/dnsmasq.conf
