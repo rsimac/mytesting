@@ -19,12 +19,13 @@ URI=http://www.mvps.org/winhelp2002/hosts.txt
 #geo.nbcsports.com
 WHITELIST=/tmp/whitelist.txt
 
-if test -e $WHITELIST
+if test -s $WHITELIST
 then
 echo processing $WHITELIST
 else
 echo whitelist empty or not existing, creating $WHITELIST
 touch $WHITELIST
+echo localhost > $WHITELIST
 fi
 
 
